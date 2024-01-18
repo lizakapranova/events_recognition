@@ -34,11 +34,11 @@ def get_credentials() -> Credentials:
     return creds
 
 
-def create_service(credentials: Credentials, *, app: AppType | Any) -> Resource:
-    if not isinstance(app, AppType):
-        raise AppTypeError(app)
+def create_service(credentials: Credentials, *, app: str) -> Resource:
     match app:
-        case AppType.GMAIL:
+        case AppType.GMAIL.value:
             return build('gmail', 'v1', credentials=credentials)
-        case AppType.CALENDAR:
+        case AppType.CALENDAR.value:
             return build("calendar", "v3", credentials=credentials)
+        case _:
+            raise AppTypeError

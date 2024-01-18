@@ -32,7 +32,6 @@ def decode_text(text: str) -> str:
 def parse_raw_message(raw_message: str) -> tuple[Message, str]:
     decoded_bytes = base64.urlsafe_b64decode(raw_message)
     email_message = message_from_bytes(decoded_bytes)
-    print(type(email_message))
 
     if email_message.is_multipart():
         for part in email_message.walk():
@@ -61,7 +60,7 @@ def parse_raw_message(raw_message: str) -> tuple[Message, str]:
             raise ContentError
 
 
-def form_json(email: Message, full_body: str, message_id: str) -> dict[str, str]:
+def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str, str]:
     data = {'email_id': message_id, 'body': full_body}
     sender = decode_text(email['From'])
     receiver = decode_text(email['To'])
@@ -80,7 +79,7 @@ def get_letters(service: Resource, limit: int = 10) -> None:
             message_info = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
             raw_message = message_info.get('raw')
             email, raw_message = parse_raw_message(raw_message)
-            json_data = form_json(email, raw_message, message['id'])
+            json_data = form_json_data(email, raw_message, message['id'])
             with open(f'test_files/{i + 1}.json', 'w') as file:
                 json.dump(json_data, file, indent=4)
             # print(raw_message, json_data['sender'])
