@@ -70,9 +70,9 @@ def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str,
     return data
 
 
-def get_letters(service: Resource, limit: int = 10) -> None:
+def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'INBOX') -> None:
     with http_error_catcher():
-        message_results = service.users().messages().list(userId='me', labelIds='INBOX', maxResults=limit).execute()
+        message_results = service.users().messages().list(userId='me', labelIds=labels, maxResults=limit).execute()
         messages = message_results.get('messages', [])
 
         for i, message in enumerate(messages):

@@ -1,6 +1,5 @@
 import os.path
 from enum import Enum
-from typing import Any
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
