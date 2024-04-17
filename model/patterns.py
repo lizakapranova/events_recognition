@@ -47,9 +47,10 @@ def contains_location_or_tool(entities, text):
     return has_location or has_tool
 
 
-def check_subject_for_meeting(subject):
+def check_subject_and_body_for_meeting(subject, body):
     meeting_keywords = ["meeting", "appointment", "schedule", "call", "conference", "discussion", "webinar"]
-    return any(keyword in subject.lower() for keyword in meeting_keywords)
+    return any(keyword in subject.lower() for keyword in meeting_keywords) or any(
+        keyword in body.lower() for keyword in meeting_keywords)
 
 
 def get_meeting_probability(email_dict, entities):
@@ -61,8 +62,9 @@ def get_meeting_probability(email_dict, entities):
     calendaring_phrases_score = 0.3  # 30% increase for calendaring phrases
     conditional_statements_score = 0.1  # 10% increase for conditional statements
     confirmatory_closures_score = 0.2  # 20% increase for confirmatory closures
-    meeting_tools_locations_score = 0.3  # 20% increase for mentions of meeting tools/locations
-    persons = 0.2
+    meeting_tools_locations_score = 0.2  # 20% increase for mentions of meeting tools/locations
+    persons = 0.05
+    subject = 0.3
 
     if contains_date_time_entities(entities):
         probability_score += date_time_ent
@@ -85,9 +87,8 @@ def get_meeting_probability(email_dict, entities):
     if contains_multiple_persons(entities):
         probability_score += persons
         print('persons')
-
-    if check_subject_for_meeting(email_dict['subject']):
-        probability_score += 0.3
+    if check_subject_and_body_for_meeting(email_dict['subject'], text):
+        probability_score += subject
         print('subject')
 
     threshold = 1
