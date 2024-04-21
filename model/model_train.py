@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import torch
 from transformers import BertTokenizerFast, BertForTokenClassification, Trainer, TrainingArguments
@@ -28,7 +30,12 @@ def tokenize_and_align_labels(tokenizer, sentences, labels, label_map, max_lengt
     tokenized_inputs = {'input_ids': [], 'attention_mask': []}
     all_aligned_labels = []
 
+    time_regex = re.compile(r'(\d{1,2}(:\d{2}){1,2}(am|pm))')
+
     for sentence, label_seq in zip(sentences, labels):
+        # Replace time expressions with a special token
+        sentence = time_regex.sub('[TIME]', sentence)
+
         # Tokenize the sentence and create word_ids mapping
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=max_length,
                                        padding='max_length', truncation=True, return_attention_mask=True,
@@ -41,17 +48,42 @@ def tokenize_and_align_labels(tokenizer, sentences, labels, label_map, max_lengt
         previous_word_id = None
         label_index = 0
 
-        for word_id in word_ids:
+        # Keep track of the start and end indices of time expressions
+        time_start = -1
+        time_end = -1
+
+        for word_index, word_id in enumerate(word_ids):
             if word_id is None:
                 # Special tokens ([CLS], [SEP], padding) have no corresponding word and should be ignored in loss
                 aligned_label_ids.append(-100)
             elif word_id != previous_word_id and label_index < len(label_seq):
                 # Use label of the current word and increment label_index
-                aligned_label_ids.append(label_map.get(label_seq[label_index], -100))
-                label_index += 1
+                if time_start != -1 and time_end != -1:
+                    # If the current word is part of a time expression, use the label for the entire expression
+                    if time_start <= word_index <= time_end:
+                        aligned_label_ids.append(label_map.get('I-DAT', -100))
+                    else:
+                        aligned_label_ids.append(label_map.get(label_seq[label_index], -100))
+                        label_index += 1
+                else:
+                    aligned_label_ids.append(label_map.get(label_seq[label_index], -100))
+                    label_index += 1
+
+                # Check if the current word is a time expression
+                if word_ids[word_index] == tokenizer.convert_tokens_to_ids('[TIME]'):
+                    time_start = word_index
+                    time_end = word_index + 1
+
+                    # Find the end index of the time expression
+                    while word_ids[time_end] is not None and time_end < len(word_ids):
+                        time_end += 1
             else:
                 # For subword tokens, set label to -100 (ignored in loss)
                 aligned_label_ids.append(-100)
+
+                # Update the end index of the time expression
+                if time_start != -1 and time_end != -1:
+                    time_end = word_index + 1
 
             previous_word_id = word_id
 
@@ -117,12 +149,6 @@ def split_data(sentences, labels):
     return train_sentences, val_sentences, test_sentences, train_labels, val_labels, test_labels
 
 
-def tokenize_data(tokenizer, sentences, labels, label_map):
-    """Tokenize sentences and align labels with tokens."""
-    encodings, labels = tokenize_and_align_labels(tokenizer, sentences, labels, label_map)
-    return encodings, labels
-
-
 def main():
     """
     This function is the main entry point of the program.
@@ -145,15 +171,17 @@ def main():
     # Preprocess data
     sentences = [" ".join([word for word, label in sentence]) for sentence in prepared_data]
     labels = [[label for word, label in sentence] for sentence in prepared_data]
+    print(sentences)
 
     # Split data
     train_sentences, val_sentences, test_sentences, train_labels, val_labels, test_labels = split_data(sentences,
                                                                                                        labels)
 
     # Tokenize data
-    train_encodings, train_labels = tokenize_data(tokenizer, train_sentences, train_labels, label_map)
-    val_encodings, val_labels = tokenize_data(tokenizer, val_sentences, val_labels, label_map)
-    test_encodings, test_labels = tokenize_data(tokenizer, test_sentences, test_labels, label_map)
+    train_encodings, train_labels = tokenize_and_align_labels(tokenizer, train_sentences, train_labels, label_map)
+    print(train_encodings)
+    val_encodings, val_labels = tokenize_and_align_labels(tokenizer, val_sentences, val_labels, label_map)
+    test_encodings, test_labels = tokenize_and_align_labels(tokenizer, test_sentences, test_labels, label_map)
 
     # Create datasets
     train_dataset = NERDataset(train_encodings, train_labels)

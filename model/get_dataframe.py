@@ -115,5 +115,6 @@ processed_data = process_documents(data)
 
 prepared_data = prepare_data_for_ner(processed_data)
 
+
 with open('prepared_data.pkl', 'wb') as file:
     pickle.dump(prepared_data, file)

@@ -20,19 +20,15 @@ def predict_entities(text, tokenizer, model, label_map):
     Returns:
     - entities: A list of tuples where each tuple contains a token and its predicted label.
     """
-    # Tokenize the input text
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
 
-    # Get model predictions
     with torch.no_grad():
         outputs = model(**inputs)
     predictions = torch.argmax(outputs.logits, dim=-1)
 
-    # Flatten the tensors for iteration
     input_ids = inputs["input_ids"].squeeze()
     pred_labels = predictions.squeeze()
 
-    # Convert predicted token IDs to tokens and their labels
     entities = []
     for token_id, label_id in zip(input_ids.tolist(), pred_labels.tolist()):
         token = tokenizer.convert_ids_to_tokens(token_id)
@@ -53,7 +49,8 @@ def main():
 
     data = json.load(f)
 
-    entities_with_meeting = predict_entities(data['body'], tokenizer, model, label_map_inverse)
+    entities_with_meeting = predict_entities(data['body'], tokenizer, model,
+                                             label_map_inverse)  # это не ок, что все разбивается на слова (или даже меньше), из-за этого плохо предсказывает
     # entities_without_meeting = predict_entities(second_letter, tokenizer, model)
     print(entities_with_meeting)
 

@@ -1,7 +1,7 @@
 def contains_date_time_entities(entities):
     has_date = any(label == 'I-DAT' or label == 'B-DAT' for _, label in entities)
     has_time = any(label == 'I-TIM' or label == 'B-TIM' for _, label in entities)
-    return has_date and has_time
+    return has_date or has_time
 
 
 def contains_multiple_persons(entities):
@@ -57,14 +57,14 @@ def get_meeting_probability(email_dict, entities):
     text = email_dict['body']
 
     probability_score = 0
-    date_time_ent = 0.2
-    sender_recipient_score = 0.2  # 20% increase if sender/recipient indicates a meeting-related role
-    calendaring_phrases_score = 0.3  # 30% increase for calendaring phrases
-    conditional_statements_score = 0.1  # 10% increase for conditional statements
-    confirmatory_closures_score = 0.2  # 20% increase for confirmatory closures
-    meeting_tools_locations_score = 0.2  # 20% increase for mentions of meeting tools/locations
-    persons = 0.05
-    subject = 0.3
+    date_time_ent = 0.55  # Ключевое!
+    sender_recipient_score = 0.02
+    calendaring_phrases_score = 0.02
+    conditional_statements_score = 0.01
+    confirmatory_closures_score = 0.01
+    meeting_tools_locations_score = 0.1
+    persons = 0.2
+    subject = 0.1
 
     if contains_date_time_entities(entities):
         probability_score += date_time_ent
@@ -91,6 +91,6 @@ def get_meeting_probability(email_dict, entities):
         probability_score += subject
         print('subject')
 
-    threshold = 1
+    threshold = 0.6
 
     return probability_score > threshold, probability_score
