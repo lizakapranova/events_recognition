@@ -2,7 +2,7 @@ from transformers import BertTokenizer, BertForTokenClassification
 import torch
 from patterns import get_meeting_probability
 import json
-
+import re
 from constants import label_map_inverse
 
 
@@ -20,6 +20,8 @@ def predict_entities(text, tokenizer, model, label_map):
     Returns:
     - entities: A list of tuples where each tuple contains a token and its predicted label.
     """
+    time_re = re.compile(r'\b(1[012]|[1-9]):[0-5][0-9](:[0-5][0-9])?\s*(AM|am|PM|pm)\b')
+    text = time_re.sub('[TIME]', text)
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
 
     with torch.no_grad():
