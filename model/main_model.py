@@ -1,3 +1,5 @@
+import os
+
 from transformers import BertTokenizer, BertForTokenClassification
 import torch
 from patterns import get_meeting_probability
@@ -44,10 +46,13 @@ def main():
     """
     Function to execute the main logic of the program.
     """
-    tokenizer = BertTokenizer.from_pretrained('../results/my_model')
-    model = BertForTokenClassification.from_pretrained('../results/my_model')
+    tokenizer = BertTokenizer.from_pretrained('../results/my_model') if os.path.exists(
+        '../results/my_model') else BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertForTokenClassification.from_pretrained('../results/my_model') if os.path.exists(
+        '../results/my_model') else BertForTokenClassification.from_pretrained('bert-base-uncased')
+    model.eval()
 
-    f = open('./mail.json')
+    f = open('/Users/danyapetrovich/PycharmProjects/course_mail/mail.json')
 
     data = json.load(f)
 

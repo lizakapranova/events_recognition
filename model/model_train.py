@@ -163,7 +163,8 @@ def main():
     None
     """
     # Load data
-    prepared_data = load_data('/Users/petrovichdan/PycharmProjects/CourseMailModel/prepared_data.pkl')
+    prepared_data = load_data(
+        '/Users/danyapetrovich/PycharmProjects/course_mail/events_recognition/model/prepared_data.pkl')
 
     # Initialize tokenizer
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
@@ -171,7 +172,6 @@ def main():
     # Preprocess data
     sentences = [" ".join([word for word, label in sentence]) for sentence in prepared_data]
     labels = [[label for word, label in sentence] for sentence in prepared_data]
-    print(sentences)
 
     # Split data
     train_sentences, val_sentences, test_sentences, train_labels, val_labels, test_labels = split_data(sentences,
@@ -179,7 +179,7 @@ def main():
 
     # Tokenize data
     train_encodings, train_labels = tokenize_and_align_labels(tokenizer, train_sentences, train_labels, label_map)
-    print(train_encodings)
+
     val_encodings, val_labels = tokenize_and_align_labels(tokenizer, val_sentences, val_labels, label_map)
     test_encodings, test_labels = tokenize_and_align_labels(tokenizer, test_sentences, test_labels, label_map)
 

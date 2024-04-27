@@ -54,14 +54,24 @@ def check_subject_and_body_for_meeting(subject, body):
 
 
 def get_meeting_probability(email_dict, entities):
+    """
+    Calculates the probability of a meeting occurrence based on the given email and entities.
+
+    Args:
+        email_dict (dict): A dictionary containing the email information.
+        entities (list): A list of entities extracted from the email body.
+
+    Returns:
+        tuple: A tuple containing a boolean indicating if the probability is above the threshold and the calculated probability score.
+    """
     text = email_dict['body']
 
     probability_score = 0
     date_time_ent = 0.55  # Ключевое!
     sender_recipient_score = 0.02
     calendaring_phrases_score = 0.02
-    conditional_statements_score = 0.01
-    confirmatory_closures_score = 0.01
+    conditional_statements_score = 0.03
+    confirmatory_closures_score = 0.02
     meeting_tools_locations_score = 0.1
     persons = 0.2
     subject = 0.1
