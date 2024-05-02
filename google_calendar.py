@@ -19,25 +19,26 @@ def create_event_structure(event_type, **fields):
     return event
 
 
-def add_event(service: Resource) -> None:
+def add_event(service: Resource, events: list[dict[str, str]]) -> None:
     with http_error_catcher():
         calendars_result = service.calendarList().list().execute()
         calendars = calendars_result.get('items', [])
         primary_calendar_id = next((calendar['id'] for calendar in calendars if calendar.get('primary')), None)
         # This is an example for now, I need to change this
-        event = create_event_structure(event_type='meeting', title='Google I/O 2015', start={
-            'dateTime': '2024-01-17T09:00:00-07:00',
-            'timeZone': 'America/Los_Angeles'
-        }, end={
-            'dateTime': '2024-01-17T17:00:00-07:00',
-            'timeZone': 'America/Los_Angeles'
-        }, attendees=[
-            {'email': 'lpage@example.com'},
-            {'email': 'sbrin@example.com'},
-        ])
-
-        event = service.events().insert(calendarId=primary_calendar_id, body=event).execute()
-        print(f"Event created: {event.get('htmlLink')}")
+        for event_info in events:
+            event = create_event_structure(event_info['type'], **event_info)
+            # event = create_event_structure(event_type='meeting', title='Google I/O 2015', start={
+            #     'dateTime': '2024-01-17T09:00:00-07:00',
+            #     'timeZone': 'America/Los_Angeles'
+            # }, end={
+            #     'dateTime': '2024-01-17T17:00:00-07:00',
+            #     'timeZone': 'America/Los_Angeles'
+            # }, attendees=[
+            #     {'email': 'lpage@example.com'},
+            #     {'email': 'sbrin@example.com'},
+            # ])
+            event = service.events().insert(calendarId=primary_calendar_id, body=event).execute()
+            print(f"Event created: {event.get('htmlLink')}")
 
 # EXAMPLE OF EVENT:
 # event = {
