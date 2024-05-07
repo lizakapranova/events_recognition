@@ -70,7 +70,8 @@ def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str,
     return data
 
 
-def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'INBOX') -> None:
+def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'INBOX') -> list[dict[str, str]]:
+    letters = []
     with http_error_catcher():
         message_results = service.users().messages().list(userId='me', labelIds=labels, maxResults=limit).execute()
         messages = message_results.get('messages', [])
@@ -80,9 +81,7 @@ def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'I
             raw_message = message_info.get('raw')
             email, raw_message = parse_raw_message(raw_message)
             json_data = form_json_data(email, raw_message, message['id'])
-            with open(f'test_files/{i + 1}.json', 'w') as file:
-                json.dump(json_data, file, indent=4)
-            # print(raw_message, json_data['sender'])
-            # print('-' * 30)
+            letters.append(json_data)
+    return letters
 
 # TODO: найти информацию по сбору фидбека
