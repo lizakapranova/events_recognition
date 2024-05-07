@@ -1,69 +1,91 @@
-import os
-
-from transformers import BertTokenizer, BertForTokenClassification
-import torch
-from patterns import get_meeting_probability
 import json
-import re
-from constants import label_map_inverse
+from patterns import get_meeting_probability
+import dateutil.parser
+from datetime import datetime, timedelta
+
+import spacy
 
 
-def predict_entities(text, tokenizer, model, label_map):
-    """
-    Tokenizes the input text using the provided tokenizer, makes predictions using the model,
-    and converts the predicted token IDs to tokens and their corresponding labels based on the label_map.
+def get_predictions(text):
+    nlp = spacy.load('en_core_web_trf')
+    doc = nlp(text)
 
-    Parameters:
-    - text: The input text to predict entities from.
-    - tokenizer: The tokenizer used to tokenize the input text.
-    - model: The model used to make predictions.
-    - label_map: A mapping of label IDs to their corresponding labels.
+    return doc
 
-    Returns:
-    - entities: A list of tuples where each tuple contains a token and its predicted label.
-    """
-    time_re = re.compile(r'\b(1[012]|[1-9]):[0-5][0-9](:[0-5][0-9])?\s*(AM|am|PM|pm)\b')
-    text = time_re.sub('[TIME]', text)
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
 
-    with torch.no_grad():
-        outputs = model(**inputs)
-    predictions = torch.argmax(outputs.logits, dim=-1)
+def parse_time(time_str):
+    if "-" in time_str:
+        start_time_str, end_time_str = time_str.split(" - ")
+        start_time = dateutil.parser.parse(start_time_str)
+        end_time = dateutil.parser.parse(end_time_str)
+        return start_time.time(), end_time.time()
+    else:
+        time_obj = dateutil.parser.parse(time_str)
+        return time_obj.time(), None
 
-    input_ids = inputs["input_ids"].squeeze()
-    pred_labels = predictions.squeeze()
 
-    entities = []
-    for token_id, label_id in zip(input_ids.tolist(), pred_labels.tolist()):
-        token = tokenizer.convert_ids_to_tokens(token_id)
-        label = label_map.get(label_id, "Unknown")  # Handle unknown labels
-        entities.append((token, label))
-
-    return entities
+def parse_date(date_str):
+    if date_str.lower() in {"tomorrow", "tomorrow's", "tomorrow's day"}:
+        return (datetime.now() + timedelta(days=1)).strftime("%d.%m.%Y")
+    elif date_str.lower() == "in a day":
+        return (datetime.now() + timedelta(days=2)).strftime("%d.%m.%Y")
+    elif date_str.lower().startswith("in "):
+        try:
+            num_days = int(date_str.lower().split()[1])
+            return (datetime.now() + timedelta(days=num_days)).strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid format for relative date")
+    else:
+        try:
+            parsed_date = dateutil.parser.parse(date_str, default=datetime.now())
+            if parsed_date < datetime.now():
+                raise ValueError("Date cannot be in the past")
+            return parsed_date.strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid date format")
 
 
 def main():
-    """
-    Function to execute the main logic of the program.
-    """
-    tokenizer = BertTokenizer.from_pretrained('../results/my_model') if os.path.exists(
-        '../results/my_model') else BertTokenizer.from_pretrained('bert-base-uncased')
-    model = BertForTokenClassification.from_pretrained('../results/my_model') if os.path.exists(
-        '../results/my_model') else BertForTokenClassification.from_pretrained('bert-base-uncased')
-    model.eval()
-
-    f = open('/Users/danyapetrovich/PycharmProjects/course_mail/mail.json')
-
+    f = open('../mail.json')
     data = json.load(f)
+    text = data['body']
 
-    entities_with_meeting = predict_entities(data['body'], tokenizer, model,
-                                             label_map_inverse)  # это не ок, что все разбивается на слова (или даже меньше), из-за этого плохо предсказывает
-    # entities_without_meeting = predict_entities(second_letter, tokenizer, model)
-    print(entities_with_meeting)
+    doc = get_predictions(text)
 
-    is_meeting, prob = get_meeting_probability(data, entities_with_meeting)
+    is_meeting, prob = get_meeting_probability(data, doc)
 
     print(f"Letter with meeting: {is_meeting} (Probability: {prob})")
+
+    date_entities = [ent for ent in doc.ents if ent.label_ == 'DATE']
+    time_entities = [ent for ent in doc.ents if ent.label_ == 'TIME']
+
+    date = [ent.text for ent in date_entities]
+    time = [ent.text for ent in time_entities]
+
+    time_parsed = parse_time(time[0])
+    if len(data) != 0:
+        date_parsed = parse_date(date[0])
+    else:
+        date_parsed = datetime.now().strftime("%d.%m.%Y")
+
+    start_datetime = datetime.strptime(date_parsed, "%d.%m.%Y")
+    start_datetime = start_datetime.replace(hour=time_parsed[0].hour, minute=time_parsed[0].minute, second=0)
+    end_datetime = None
+    if time_parsed[1] is not None:
+        end_datetime = start_datetime.replace(hour=time_parsed[1].hour, minute=time_parsed[1].minute, second=0)
+        end_datetime = end_datetime.isoformat()
+    start_datetime = start_datetime.isoformat()
+
+    data = {
+        'start': {
+            'dateTime': start_datetime,
+        },
+        'end': {
+            'dateTime': end_datetime,
+        }
+    }
+
+    return data
 
 
 if __name__ == '__main__':

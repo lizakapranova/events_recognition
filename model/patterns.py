@@ -1,21 +1,49 @@
+import re
+
+
 def contains_date_time_entities(entities):
-    has_date = any(label == 'I-DAT' or label == 'B-DAT' for _, label in entities)
-    has_time = any(label == 'I-TIM' or label == 'B-TIM' for _, label in entities)
-    return has_date or has_time
+    has_date = any(label == 'DATE' for _, label in entities)
+    has_time = any(label == 'TIME' for _, label in entities)
+    return has_date and has_time
 
 
 def contains_multiple_persons(entities):
-    person_count = sum(1 for _, label in entities if label in ['I-PER', 'B-PER'])
+    person_count = sum(1 for _, label in entities if label == 'PERSON')
     return person_count > 2
 
 
-def check_sender_recipient_info(email_info: str, entities):
+def check_sender_recipient_info(email_info: str, doc):
     keywords = ["manager", "coordinator", "secretary", "director", "HR", "head"]
     sender_title = email_info.split()[-1]
     recipient_title = email_info.split()[:-1]
 
-    return any(keyword in sender_title for keyword in keywords) or \
-        any(keyword in recipient_title for keyword in keywords)
+    # Find spans in the document that match the sender and recipient titles
+    sender_spans = [span for span in doc.ents if span.text == sender_title]
+    recipient_spans = [span for span in doc.ents if span.text == " ".join(recipient_title)]
+
+    # Check if any of the spans match the keywords
+    return any(keyword in span.text for keyword in keywords for span in sender_spans) or \
+        any(keyword in span.text for keyword in keywords for span in recipient_spans)
+
+
+def contains_video_conferencing_ref(text):
+    video_conferencing_patterns = [
+        r'\bzoom\b',
+        r'\bgoogle meet\b',
+        r'\bgoogle hangouts\b',
+        r'\bmicrosoft teams\b',
+        r'\bteams\b',  # in case "teams" is used without "Microsoft"
+        r'\bskype\b',
+        r'\bwebex\b',
+        r'\bgotomeeting\b',
+        r'\bbluejeans\b'
+    ]
+
+    for pattern in video_conferencing_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+
+    return False
 
 
 def check_calendaring_phrases(text):
@@ -42,7 +70,7 @@ def check_confirmatory_closures(text):
 
 def contains_location_or_tool(entities, text):
     meeting_tools = ["zoom", "teams", "skype", "webex", "google meet"]
-    has_location = any(label == 'I-LOC' or label == 'B-LOC' for _, label in entities)
+    has_location = any(label == 'LOC' for _, label in entities)
     has_tool = any(tool in text.lower() for tool in meeting_tools)
     return has_location or has_tool
 
@@ -53,13 +81,13 @@ def check_subject_and_body_for_meeting(subject, body):
         keyword in body.lower() for keyword in meeting_keywords)
 
 
-def get_meeting_probability(email_dict, entities):
+def get_meeting_probability(email_dict, doc):
     """
-    Calculates the probability of a meeting occurrence based on the given email and entities.
+    Calculates the probability of a meeting occurrence based on the given email and doc object.
 
     Args:
         email_dict (dict): A dictionary containing the email information.
-        entities (list): A list of entities extracted from the email body.
+        doc (Doc): A spaCy Doc object containing the processed email text.
 
     Returns:
         tuple: A tuple containing a boolean indicating if the probability is above the threshold and the calculated probability score.
@@ -73,13 +101,16 @@ def get_meeting_probability(email_dict, entities):
     conditional_statements_score = 0.03
     confirmatory_closures_score = 0.02
     meeting_tools_locations_score = 0.1
-    persons = 0.2
-    subject = 0.1
+    persons = 0.13
+    subject = 0.12
+    ref = 0.05
+
+    entities = [(ent.text, ent.label_) for ent in doc.ents]
 
     if contains_date_time_entities(entities):
         probability_score += date_time_ent
         print('datetime')
-    if check_sender_recipient_info(email_dict['sender'], entities):
+    if check_sender_recipient_info(email_dict['sender'], doc):
         probability_score += sender_recipient_score
         print('sender')
     if check_calendaring_phrases(text):
@@ -100,6 +131,9 @@ def get_meeting_probability(email_dict, entities):
     if check_subject_and_body_for_meeting(email_dict['subject'], text):
         probability_score += subject
         print('subject')
+    if contains_video_conferencing_ref(text):
+        probability_score += ref
+        print('ref')
 
     threshold = 0.6
 
