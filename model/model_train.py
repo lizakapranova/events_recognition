@@ -1,14 +1,13 @@
-import spacy
-from spacy.util import minibatch, compounding
+import torch
 from datasets import load_dataset
-from spacy.training import Example
 from model import MySpaCyModel
 
 
 def train_model():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     train_data = load_dataset("conll2012_ontonotesv5", "english_v4")['train']
-
-    model = MySpaCyModel()
+    train_data = train_data.to(device)
+    model = MySpaCyModel().to(device)
     model.fit(train_data)
 
 
