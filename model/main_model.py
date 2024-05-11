@@ -2,15 +2,7 @@ import json
 from patterns import get_meeting_probability
 import dateutil.parser
 from datetime import datetime, timedelta
-
-import spacy
-
-
-def get_predictions(text):
-    nlp = spacy.load('en_core_web_trf')
-    doc = nlp(text)
-
-    return doc
+from model import MySpaCyModel
 
 
 def parse_time(time_str):
@@ -50,9 +42,15 @@ def main():
     data = json.load(f)
     text = data['body']
 
-    doc = get_predictions(text)
+    model = MySpaCyModel()
 
-    is_meeting, prob = get_meeting_probability(data, doc)
+    doc = model.predict(text)
+
+    answer = get_meeting_probability(data, doc)
+    is_meeting = answer['is_meeting']
+    if not is_meeting:
+        return None
+    prob = answer['probability']
 
     print(f"Letter with meeting: {is_meeting} (Probability: {prob})")
 
@@ -77,6 +75,7 @@ def main():
     start_datetime = start_datetime.isoformat()
 
     data = {
+        'description': answer['is_ref'] if answer['is_ref'] is not None else '',
         'start': {
             'dateTime': start_datetime,
         },

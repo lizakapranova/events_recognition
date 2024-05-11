@@ -28,22 +28,23 @@ def check_sender_recipient_info(email_info: str, doc):
 
 def contains_video_conferencing_ref(text):
     video_conferencing_patterns = [
-        r'\bzoom\b',
-        r'\bgoogle meet\b',
-        r'\bgoogle hangouts\b',
-        r'\bmicrosoft teams\b',
-        r'\bteams\b',  # in case "teams" is used without "Microsoft"
-        r'\bskype\b',
-        r'\bwebex\b',
-        r'\bgotomeeting\b',
-        r'\bbluejeans\b'
+        r'\b(zoom)\b',
+        r'\b(google meet)\b',
+        r'\b(google hangouts)\b',
+        r'\b(microsoft teams)\b',
+        r'\b(teams)\b',  # in case "teams" is used without "Microsoft"
+        r'\b(skype)\b',
+        r'\b(webex)\b',
+        r'\b(gotomeeting)\b',
+        r'\b(bluejeans)\b'
     ]
 
     for pattern in video_conferencing_patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            return True
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
 
-    return False
+    return None
 
 
 def check_calendaring_phrases(text):
@@ -131,10 +132,17 @@ def get_meeting_probability(email_dict, doc):
     if check_subject_and_body_for_meeting(email_dict['subject'], text):
         probability_score += subject
         print('subject')
-    if contains_video_conferencing_ref(text):
+    if contains_video_conferencing_ref(text) is not None:
         probability_score += ref
         print('ref')
 
     threshold = 0.6
 
-    return probability_score > threshold, probability_score
+    data = {
+        "is_meeting": probability_score > threshold,
+        "probability": probability_score,
+        "is_ref": contains_video_conferencing_ref(text),
+        "persons": contains_multiple_persons(entities)
+    }
+
+    return data
