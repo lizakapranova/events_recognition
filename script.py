@@ -1,14 +1,13 @@
-from utils.api_utils import get_credentials, create_service, AppType
+from utils.api_utils import create_service, AppType
 from google_calendar import add_event
 from gmail import get_letters
+from google.oauth2.credentials import Credentials
 
 def letters_predict(letters):
     return []
 
 
-
-def main() -> None:
-    creds = get_credentials()
+def script(creds: Credentials) -> None:
 
     # work with gmail
     gmail_service = create_service(creds, app=AppType.GMAIL)
@@ -18,8 +17,5 @@ def main() -> None:
 
     # work with calendar
     calendar_service = create_service(creds, app=AppType.CALENDAR)
-    add_event(calendar_service, prediction_results)
-
-
-if __name__ == '__main__':
-    main()
+    log = add_event(calendar_service, prediction_results)
+    return log
