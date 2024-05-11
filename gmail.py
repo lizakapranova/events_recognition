@@ -1,5 +1,4 @@
 import base64
-import json
 from email import message_from_bytes
 from email.header import decode_header
 from email.message import Message
@@ -57,7 +56,7 @@ def parse_raw_message(raw_message: str) -> tuple[Message, str]:
             if clean_body:
                 return email_message, clean_body
         else:
-            raise ContentError
+            raise ContentError()
 
 
 def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str, str]:
@@ -83,5 +82,3 @@ def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'I
             json_data = form_json_data(email, raw_message, message['id'])
             letters.append(json_data)
     return letters
-
-# TODO: найти информацию по сбору фидбека
