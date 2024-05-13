@@ -3,7 +3,6 @@ from enum import Enum
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build, Resource
 
-from utils.errors import AppTypeError
 from typing import Any
 
 
@@ -12,14 +11,14 @@ class AppType(Enum):
     CALENDAR = 'calendar'
 
 
-def create_service(credentials: Credentials, *, app: AppType) -> Resource:
+def create_service(credentials: Credentials, *, app: AppType) -> Resource | None:
     match app:
         case AppType.GMAIL:
             return build('gmail', 'v1', credentials=credentials)
         case AppType.CALENDAR:
             return build("calendar", "v3", credentials=credentials)
         case _:
-            raise AppTypeError
+            return None
 
 
 def credentials_to_dict(credentials: Credentials) -> dict[str, Any]:

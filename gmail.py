@@ -6,7 +6,6 @@ from email.message import Message
 from bs4 import BeautifulSoup
 
 from utils.error_handling import http_error_catcher
-from utils.errors import ContentError
 from googleapiclient.discovery import Resource
 
 
@@ -56,7 +55,7 @@ def parse_raw_message(raw_message: str) -> tuple[Message, str]:
             if clean_body:
                 return email_message, clean_body
         else:
-            raise ContentError()
+            return Message(), ''
 
 
 def form_json_data(email: Message, full_body: str) -> dict[str, str]:
