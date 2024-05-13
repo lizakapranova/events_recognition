@@ -3,7 +3,7 @@ from enum import Enum
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build, Resource
 
-from .errors import AppTypeError
+from utils.errors import AppTypeError
 from typing import Any
 
 

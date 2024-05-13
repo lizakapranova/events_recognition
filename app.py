@@ -4,19 +4,16 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 import time
 import threading
-from flask_sse import ServerSentEventsBlueprint
 
 from script import script
 from utils.api_utils import credentials_to_dict
 
 app = flask.Flask(__name__)
-sse = ServerSentEventsBlueprint('sse', app.name)
-app.register_blueprint(sse)
 app.secret_key = 'eaf44ba87ca2b7dc6f0e0d34eb392f7fb819fb2e9ec200399873245ce4089ea2'
-app.template_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
 
 CLIENT_SECRETS_FILE = "auth/client_secret.json"
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/gmail.readonly']
+SCRIPT_PERIOD = 45  # every 15 minutes
 
 
 @app.route('/')
@@ -25,19 +22,24 @@ def index():
         return flask.redirect('authorize')
     credentials = Credentials(**flask.session['credentials'])
 
-    def run_script():
+    @flask.copy_current_request_context
+    def run_script(creds):
         while True:
-            log = script(credentials)
-            flask.session['credentials'] = credentials_to_dict(credentials)
-            event = {'data': log, 'type': 'log'}
-            flask.session.modified = True
-            sse.publish(event, type='log')
-            time.sleep(30)
+            start_time = time.time()
+            print('Script started')
+            log = script(creds)
+            flask.session['credentials'] = credentials_to_dict(creds)
+            print(log)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            sleep_time = SCRIPT_PERIOD - elapsed_time
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
-    script_tread = threading.Thread(target=run_script)
-    script_tread.start()
+    script_thread = threading.Thread(target=run_script, args=(credentials,))
+    script_thread.start()
 
-    return flask.render_template('index.html')
+    return 'Script started.'
 
 
 @app.route('/authorize')

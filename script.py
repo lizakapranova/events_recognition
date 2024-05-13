@@ -42,4 +42,4 @@ def script(creds: Credentials) -> str:
 
 if __name__ == '__main__':
     creds = get_credentials()
-    script(creds)
+    print(script(creds))

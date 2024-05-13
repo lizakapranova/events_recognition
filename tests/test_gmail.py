@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from gmail import decode_text, remove_empty_lines, parse_raw_message, form_json_data
+from app.gmail import decode_text, remove_empty_lines, parse_raw_message, form_json_data
 from utils.errors import ContentError
 
 

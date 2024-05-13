@@ -110,31 +110,22 @@ def get_meeting_probability(email_dict, doc):
 
     if contains_date_time_entities(entities):
         probability_score += date_time_ent
-        print('datetime')
     if check_sender_recipient_info(email_dict['sender'], doc):
         probability_score += sender_recipient_score
-        print('sender')
     if check_calendaring_phrases(text):
         probability_score += calendaring_phrases_score
-        print('calendar')
     if check_conditional_statements(text):
         probability_score += conditional_statements_score
-        print('conditional')
     if check_confirmatory_closures(text):
         probability_score += confirmatory_closures_score
-        print('confirmatory')
     if contains_location_or_tool(entities, text):
         probability_score += meeting_tools_locations_score
-        print('meeting tools')
     if contains_multiple_persons(entities):
         probability_score += persons
-        print('persons')
     if check_subject_and_body_for_meeting(email_dict['subject'], text):
         probability_score += subject
-        print('subject')
     if contains_video_conferencing_ref(text) is not None:
         probability_score += ref
-        print('ref')
 
     threshold = 0.6
 
