@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from app.gmail import decode_text, remove_empty_lines, parse_raw_message, form_json_data
+from gmail import decode_text, remove_empty_lines, parse_raw_message, form_json_data
 from utils.errors import ContentError
 
 
@@ -194,8 +194,7 @@ def email_message() -> EmailMessage:
 
 
 def test_forming_json_dict(email_message: EmailMessage) -> None:
-    json_data = form_json_data(email_message, 'This is a test message.', 'test_id')
-    assert 'email_id' in json_data and json_data['email_id'] == 'test_id'
+    json_data = form_json_data(email_message, 'This is a test message.')
     assert 'sender' in json_data and json_data['sender'] == 'sender@example.com'
     assert 'receiver' in json_data and json_data['receiver'] == 'receiver@example.com'
     assert 'subject' in json_data and json_data['subject'] == 'Test Subject'

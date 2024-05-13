@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from app.google_calendar import create_event_structure
+from google_calendar import create_event_structure
 
 
 @dataclass
