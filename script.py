@@ -36,7 +36,7 @@ def script(creds: Credentials) -> str:
 
     # work with calendar
     calendar_service = create_service(creds, app=AppType.CALENDAR)
-    log = add_event(calendar_service, prediction_results)
+    log = add_event(calendar_service, prediction_results, letters)
     return log
 
 

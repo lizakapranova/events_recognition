@@ -83,10 +83,10 @@ def _letter_prediction(data):
     return data
 
 
-def letters_prediction(letters):
-    predictions = []
-    for letter in letters:
+def letters_prediction(letters:dict[str, dict[str, str]]):
+    predictions = {}
+    for email_id, letter in letters.items():
         prediction = _letter_prediction(letter)
         if prediction:
-            predictions.append(prediction)
+            predictions[email_id] = prediction
     return predictions

@@ -59,8 +59,8 @@ def parse_raw_message(raw_message: str) -> tuple[Message, str]:
             raise ContentError()
 
 
-def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str, str]:
-    data = {'email_id': message_id, 'body': full_body}
+def form_json_data(email: Message, full_body: str) -> dict[str, str]:
+    data = {'body': full_body}
     sender = decode_text(email['From'])
     receiver = decode_text(email['To'])
     date = email['Date']
@@ -69,8 +69,8 @@ def form_json_data(email: Message, full_body: str, message_id: str) -> dict[str,
     return data
 
 
-def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'INBOX') -> list[dict[str, str]]:
-    letters = []
+def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'INBOX') -> dict[str, dict[str, str]]:
+    letters = {}
     with http_error_catcher():
         message_results = service.users().messages().list(userId='me', labelIds=labels, maxResults=limit).execute()
         messages = message_results.get('messages', [])
@@ -79,6 +79,6 @@ def get_letters(service: Resource, limit: int = 10, labels: str | list[str] = 'I
             message_info = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
             raw_message = message_info.get('raw')
             email, raw_message = parse_raw_message(raw_message)
-            json_data = form_json_data(email, raw_message, message['id'])
-            letters.append(json_data)
+            json_data = form_json_data(email, raw_message)
+            letters[message['id']] = json_data
     return letters
