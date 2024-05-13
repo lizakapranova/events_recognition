@@ -1,17 +1,17 @@
 from model.patterns import get_meeting_probability
-import dateutil.parser
 from datetime import datetime, timedelta
 import model.custom_spacy_model as custom_model
+import dateparser
 
 
 def parse_time(time_str):
     if "-" in time_str:
         start_time_str, end_time_str = time_str.split(" - ")
-        start_time = dateutil.parser.parse(start_time_str)
-        end_time = dateutil.parser.parse(end_time_str)
-        return start_time.time(), end_time.time()
+        start_time = dateparser.parse(start_time_str).time()
+        end_time = dateparser.parse(end_time_str).time()
+        return start_time, end_time
     else:
-        time_obj = dateutil.parser.parse(time_str)
+        time_obj = dateparser.parse(time_str)
         return time_obj.time(), None
 
 
@@ -28,7 +28,7 @@ def parse_date(date_str):
             raise ValueError("Invalid format for relative date")
     else:
         try:
-            parsed_date = dateutil.parser.parse(date_str, default=datetime.now())
+            parsed_date = dateparser.parse(date_str, settings={'RELATIVE_BASE': datetime.now()})
             if parsed_date < datetime.now():
                 raise ValueError("Date cannot be in the past")
             return parsed_date.strftime("%d.%m.%Y")
