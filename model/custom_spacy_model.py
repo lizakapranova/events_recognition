@@ -1,6 +1,7 @@
 import spacy
 from spacy.util import minibatch, compounding
 from spacy.training import Example
+import torch
 
 
 class MySpaCyModel(torch.nn.Module):
@@ -31,11 +32,8 @@ class MySpaCyModel(torch.nn.Module):
         for itn in range(10):
             losses = {}
             batches = minibatch(examples, size=compounding(4.0, 32.0, 1.001))
-            pbar = tqdm(total=len(batches))
             for batch in batches:
                 self.nlp.update(batch, drop=0.2, sgd=optimizer, losses=losses)
-                pbar.update(1)
-            pbar.close()
             print(f"Iteration {itn} complete, loss: {losses}")
             # Calculate metrics on a validation set here
 

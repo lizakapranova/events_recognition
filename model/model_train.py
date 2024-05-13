@@ -1,6 +1,6 @@
 import torch
 from datasets import load_dataset
-from model import MySpaCyModel
+from custom_spacy_model import MySpaCyModel
 
 
 def train_model():

@@ -1,8 +1,7 @@
-import json
-from patterns import get_meeting_probability
+from model.patterns import get_meeting_probability
 import dateutil.parser
 from datetime import datetime, timedelta
-from model import MySpaCyModel
+import model.custom_spacy_model as custom_model
 
 
 def parse_time(time_str):
@@ -37,12 +36,9 @@ def parse_date(date_str):
             raise ValueError("Invalid date format")
 
 
-def main():
-    f = open('../mail.json')
-    data = json.load(f)
+def _letter_prediction(data):
     text = data['body']
-
-    model = MySpaCyModel()
+    model = custom_model.MySpaCyModel()
 
     doc = model.predict(text)
 
@@ -87,5 +83,10 @@ def main():
     return data
 
 
-if __name__ == '__main__':
-    main()
+def letters_prediction(letters):
+    predictions = []
+    for letter in letters:
+        prediction = _letter_prediction(letter)
+        if prediction:
+            predictions.append(prediction)
+    return predictions

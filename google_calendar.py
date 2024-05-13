@@ -23,20 +23,20 @@ def add_event(service: Resource, events: list[dict[str, str]]) -> str:
         calendars = calendars_result.get('items', [])
         primary_calendar_id = next((calendar['id'] for calendar in calendars if calendar.get('primary')), None)
         # This is an example for now, I need to change this
-        events.append({'type':'meeting', 'title':'Google I/O 2015', 'start':{
-                'dateTime': '2024-01-17T09:00:00-07:00',
-                'timeZone': 'America/Los_Angeles'
-            }, 'end':{
-                'dateTime': '2024-01-17T17:00:00-07:00',
-                'timeZone': 'America/Los_Angeles'
-            }, 'attendees':[
-                {'email': 'lpage@example.com'},
-                {'email': 'sbrin@example.com'},
-            ]})
+        events.append({'type': 'meeting', 'title': 'Google I/O 2015', 'start': {
+            'dateTime': '2024-01-17T09:00:00-07:00',
+            'timeZone': 'America/Los_Angeles'
+        }, 'end': {
+            'dateTime': '2024-01-17T17:00:00-07:00',
+            'timeZone': 'America/Los_Angeles'
+        }, 'attendees': [
+            {'email': 'lpage@example.com'},
+            {'email': 'sbrin@example.com'},
+        ]})
         for event_info in events:
             event = create_event_structure(**event_info)
             event = service.events().insert(calendarId=primary_calendar_id, body=event).execute()
-            log +=f"Event created: {event.get('htmlLink')}\n"
+            log += f"Event created: {event.get('htmlLink')}\n"
     return log
 
 # EXAMPLE OF EVENT:
