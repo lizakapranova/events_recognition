@@ -36,26 +36,11 @@ def parse_date(date_str):
             raise ValueError("Invalid date format")
 
 
-def _letter_prediction(data):
-    text = data['body']
-    model = custom_model.MySpaCyModel()
-
-    doc = model.predict(text)
-
-    answer = get_meeting_probability(data, doc)
-    is_meeting = answer['is_meeting']
-    if not is_meeting:
-        return None
-    prob = answer['probability']
-
-    print(f"Letter with meeting: {is_meeting} (Probability: {prob})")
-
+def extract_date_time_info(doc):
     date_entities = [ent for ent in doc.ents if ent.label_ == 'DATE']
     time_entities = [ent for ent in doc.ents if ent.label_ == 'TIME']
-
     date = [ent.text for ent in date_entities]
     time = [ent.text for ent in time_entities]
-
     time_parsed = parse_time(time[0])
     if len(data) != 0:
         date_parsed = parse_date(date[0])
@@ -70,8 +55,36 @@ def _letter_prediction(data):
         end_datetime = end_datetime.isoformat()
     start_datetime = start_datetime.isoformat()
 
+    return start_datetime, end_datetime
+
+
+def _letter_prediction(data):
+    text = data['body']
+    model = custom_model.MySpaCyModel()
+
+    doc = model.predict(text)
+
+    answer = get_meeting_probability(data, doc)
+    is_meeting = answer['is_meeting']
+    if not is_meeting:
+        return None
+    # prob = answer['probability']
+
+    # print(f"Letter with meeting: {is_meeting} (Probability: {prob})")
+
+    loc_entities = [ent for ent in doc.ents if ent.label_ == 'LOC']
+    loc = [ent.text for ent in loc_entities]
+
+    description = data['subject']
+    if answer['reference'] is not None:
+        description = answer['reference']
+    elif len(loc) > 0:
+        description = loc[0]
+
+    start_datetime, end_datetime = extract_date_time_info(doc)
+
     data = {
-        'description': answer['is_ref'] if answer['is_ref'] is not None else '',
+        'description': description,
         'start': {
             'dateTime': start_datetime,
         },
@@ -83,7 +96,7 @@ def _letter_prediction(data):
     return data
 
 
-def letters_prediction(letters:dict[str, dict[str, str]]):
+def letters_prediction(letters: dict[str, dict[str, str]]):
     predictions = {}
     for email_id, letter in letters.items():
         prediction = _letter_prediction(letter)

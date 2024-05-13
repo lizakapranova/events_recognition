@@ -1,11 +1,13 @@
 import spacy
+import torch
 from spacy.util import minibatch, compounding
 from spacy.training import Example
-import torch
 
 
 class MySpaCyModel(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # spacy.require_gpu()
         self.nlp = spacy.load("en_core_web_trf")
 
     def fit(self, train_data):

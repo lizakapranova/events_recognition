@@ -1,10 +1,14 @@
 import re
 
 
-def contains_date_time_entities(entities):
+def contains_date_entity(entities):
     has_date = any(label == 'DATE' for _, label in entities)
+    return has_date
+
+
+def contains_time_entity(entities):
     has_time = any(label == 'TIME' for _, label in entities)
-    return has_date and has_time
+    return has_time
 
 
 def contains_multiple_persons(entities):
@@ -70,7 +74,8 @@ def check_confirmatory_closures(text):
 
 
 def contains_location_or_tool(entities, text):
-    meeting_tools = ["zoom", "teams", "skype", "webex", "google meet"]
+    meeting_tools = ["zoom", "google meet", "google hangouts", "microsoft teams", "teams", "skype", "webex",
+                     "gotomeeting", "bluejeans"]
     has_location = any(label == 'LOC' for _, label in entities)
     has_tool = any(tool in text.lower() for tool in meeting_tools)
     return has_location or has_tool
@@ -96,20 +101,29 @@ def get_meeting_probability(email_dict, doc):
     text = email_dict['body']
 
     probability_score = 0
-    date_time_ent = 0.55  # Ключевое!
     sender_recipient_score = 0.02
+    data_score = 0.1
     calendaring_phrases_score = 0.02
     conditional_statements_score = 0.03
     confirmatory_closures_score = 0.02
     meeting_tools_locations_score = 0.1
     persons = 0.13
     subject = 0.12
-    ref = 0.05
+    ref = 0.2
 
     entities = [(ent.text, ent.label_) for ent in doc.ents]
 
-    if contains_date_time_entities(entities):
-        probability_score += date_time_ent
+    if not contains_time_entity(entities):
+        data = {
+            "is_meeting": False,
+            "probability": 0,
+            "is_ref": None,
+            "persons": None
+        }
+        return data
+
+    if contains_date_entity(entities):
+        probability_score += data_score
     if check_sender_recipient_info(email_dict['sender'], doc):
         probability_score += sender_recipient_score
     if check_calendaring_phrases(text):
@@ -127,12 +141,12 @@ def get_meeting_probability(email_dict, doc):
     if contains_video_conferencing_ref(text) is not None:
         probability_score += ref
 
-    threshold = 0.6
+    threshold = 0.15
 
     data = {
         "is_meeting": probability_score > threshold,
         "probability": probability_score,
-        "is_ref": contains_video_conferencing_ref(text),
+        "reference": contains_video_conferencing_ref(text),
         "persons": contains_multiple_persons(entities)
     }
 
