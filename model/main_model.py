@@ -42,7 +42,7 @@ def extract_date_time_info(doc):
     date = [ent.text for ent in date_entities]
     time = [ent.text for ent in time_entities]
     time_parsed = parse_time(time[0])
-    if len(data) != 0:
+    if len(date) != 0:
         date_parsed = parse_date(date[0])
     else:
         date_parsed = datetime.now().strftime("%d.%m.%Y")
@@ -75,16 +75,19 @@ def _letter_prediction(data):
     loc_entities = [ent for ent in doc.ents if ent.label_ == 'LOC']
     loc = [ent.text for ent in loc_entities]
 
-    description = data['subject']
+    description = ''
     if answer['reference'] is not None:
-        description = answer['reference']
+        description = f'''Reference: {answer['reference']}''' + '\n'
     elif len(loc) > 0:
-        description = loc[0]
+        description = f'Location of meeting: {loc[0]}'
 
     start_datetime, end_datetime = extract_date_time_info(doc)
 
+    event_type = model.classify_event_type()
+
     data = {
         'description': description,
+        'event_type': event_type,
         'start': {
             'dateTime': start_datetime,
         },

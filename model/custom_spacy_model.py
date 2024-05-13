@@ -1,3 +1,5 @@
+import random
+
 import spacy
 import torch
 from spacy.util import minibatch, compounding
@@ -8,6 +10,7 @@ class MySpaCyModel(torch.nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # spacy.require_gpu()
+        self.doc = None
         self.nlp = spacy.load("en_core_web_trf")
 
     def fit(self, train_data):
@@ -42,5 +45,23 @@ class MySpaCyModel(torch.nn.Module):
         self.nlp.to_disk("/results/my_model")
 
     def predict(self, text):
-        doc = self.nlp(text)
-        return doc
+        self.doc = self.nlp(text)
+        return self.doc
+
+    def classify_event_type(self):
+        event_types = ["Meeting", "Call", "Reminder", "Unknown", "Webinar", "Conference"]
+        event_type_scores = {}
+        for event_type in event_types:
+            score = self.doc.similarity(self.nlp(event_type))
+            event_type_scores[event_type] = score
+
+        highest_score = max(event_type_scores.values())
+        chosen_event_type = [k for k, v in event_type_scores.items() if v == highest_score]
+
+        if highest_score < 0.2:
+            return "Unknown"
+
+        if len(chosen_event_type) > 1:
+            return random.choice(chosen_event_type)
+
+        return chosen_event_type[0]
