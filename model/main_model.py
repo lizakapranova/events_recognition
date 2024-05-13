@@ -42,7 +42,7 @@ def extract_date_time_info(doc):
     date = [ent.text for ent in date_entities]
     time = [ent.text for ent in time_entities]
     time_parsed = parse_time(time[0])
-    if len(data) != 0:
+    if len(date) != 0:
         date_parsed = parse_date(date[0])
     else:
         date_parsed = datetime.now().strftime("%d.%m.%Y")
