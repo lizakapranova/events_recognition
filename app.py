@@ -13,7 +13,7 @@ app.secret_key = 'eaf44ba87ca2b7dc6f0e0d34eb392f7fb819fb2e9ec200399873245ce4089e
 
 CLIENT_SECRETS_FILE = "auth/client_secret.json"
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/gmail.readonly']
-SCRIPT_PERIOD = 15 * 60  # every 15 minutes
+SCRIPT_PERIOD = 30  # every 15 minutes
 
 
 @app.route('/')
