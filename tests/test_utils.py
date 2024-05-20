@@ -1,16 +1,12 @@
 import pytest
 
-from utils.api_utils import create_service
-from utils.errors import AppTypeError
+from utils.api_utils import create_service, AppType
 from google.oauth2.credentials import Credentials
 
 
 def test_create_service() -> None:
     creds = Credentials('something')
-    try:
-        create_service(creds, app='gmail')
-    except AppTypeError:
-        raise TypeError('This should not be a problem!')
+    for app in (AppType.GMAIL, AppType.CALENDAR):
+        assert create_service(creds, app=app) is not None
 
-    with pytest.raises(AppTypeError):
-        create_service(creds, app='test_app')
+    assert create_service(creds, app='test_app') is None

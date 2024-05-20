@@ -9,7 +9,6 @@ from datetime import datetime
 import pytest
 
 from gmail import decode_text, remove_empty_lines, parse_raw_message, form_json_data
-from utils.errors import ContentError
 
 
 @dataclass
@@ -178,8 +177,8 @@ def test_parse_raw_message_ok(case: RawMessageCase) -> None:
 
 @pytest.mark.parametrize("case", RAW_MESSAGE_CASES_WRONG, ids=str)
 def test_parse_raw_message_wrong(case) -> None:
-    with pytest.raises(ContentError):
-        parse_raw_message(case.email)
+    _, parsed_message = parse_raw_message(case.email)
+    assert parsed_message == ''
 
 
 @pytest.fixture(scope='function')
