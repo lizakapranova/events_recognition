@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
-
+import pytz
 from googleapiclient.discovery import Resource
 
 from utils.error_handling import http_error_catcher
@@ -8,13 +8,14 @@ from utils.error_handling import http_error_catcher
 
 def create_event_structure(event_type='Meeting', **fields):
     start_dt = datetime.fromisoformat(fields['start']['dateTime'])
-    time_zone = start_dt.tzname()
+    time_zone = 'Europe/Moscow'
     fields['start'].update({'timeZone': time_zone})
     if fields['end']['dateTime'] is None:
-        end_dt = start_dt
-        end_dt.replace(hour=start_dt.hour + 1)
+        end_dt = start_dt + timedelta(hours=1)
         fields['end']['dateTime'] = end_dt.isoformat()
     fields['end'].update({'timeZone': time_zone})
+
+    # event_type = 'Meeting' if event_type == 'Unknown' else event_type
 
     event = {
         'summary': f"{event_type}: {fields['title']}",
