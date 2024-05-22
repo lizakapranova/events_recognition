@@ -1,3 +1,5 @@
+import re
+
 from model.patterns import get_meeting_probability
 from datetime import datetime, timedelta
 import model.custom_spacy_model as custom_model
@@ -5,14 +7,43 @@ import dateparser
 
 
 def parse_time(time_str):
+    def parse_single_time(time_part):
+        # Regex to match phrases like "five o'clock"
+        match = re.match(r"(\w+) o'clock", time_part, re.IGNORECASE)
+        if match:
+            # Convert the matched word to a number
+            word_to_number = {
+                "one": "1:00",
+                "two": "2:00",
+                "three": "3:00",
+                "four": "4:00",
+                "five": "5:00",
+                "six": "6:00",
+                "seven": "7:00",
+                "eight": "8:00",
+                "nine": "9:00",
+                "ten": "10:00",
+                "eleven": "11:00",
+                "twelve": "12:00"
+            }
+            normalized_time_part = word_to_number.get(match.group(1).lower(), time_part)
+        else:
+            normalized_time_part = time_part
+
+        parsed_time = dateparser.parse(normalized_time_part)
+        if parsed_time:
+            return parsed_time.time()
+        else:
+            raise ValueError(f"Unable to parse time: {time_part}")
+
     if "-" in time_str:
-        start_time_str, end_time_str = time_str.split(" - ")
-        start_time = dateparser.parse(start_time_str).time()
-        end_time = dateparser.parse(end_time_str).time()
+        start_time_str, end_time_str = map(str.strip, time_str.split(" - "))
+        start_time = parse_single_time(start_time_str)
+        end_time = parse_single_time(end_time_str)
         return start_time, end_time
     else:
-        time_obj = dateparser.parse(time_str)
-        return time_obj.time(), None
+        time_obj = parse_single_time(time_str)
+        return time_obj, None
 
 
 def parse_date(date_str):
