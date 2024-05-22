@@ -1,2 +1,11 @@
-.venv/
-/Users/danyapetrovich/PycharmProjects/course_mail/.venv/lib/python3.12/site-packages/en_core_web_lg
+*.psd
+*.zip
+*.tar.gz
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+node_modules/
+.git/
+en_core_web_lg/
