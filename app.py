@@ -9,9 +9,9 @@ from script import script
 from utils.api_utils import credentials_to_dict
 
 app = flask.Flask(__name__)
-app.secret_key = 'eaf44ba87ca2b7dc6f0e0d34eb392f7fb819fb2e9ec200399873245ce4089ea2'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-CLIENT_SECRETS_FILE = "auth/client_secret.json"
+CLIENT_SECRETS_FILE = os.getenv('CLIENT_SECRETS_FILE', 'auth/client_secret.json')
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/gmail.readonly']
 SCRIPT_PERIOD = 30  # every 15 minutes
 
