@@ -18,7 +18,7 @@ class MySpaCyModel(torch.nn.Module):
         except OSError:
             download(model_name)
             nlp = spacy.load(model_name)
-        self.writer = SummaryWriter()  # TensorBoard writer for logging metrics
+        self.writer = SummaryWriter()
 
     def fit(self, train_data):
         if torch.cuda.is_available():
@@ -56,8 +56,6 @@ class MySpaCyModel(torch.nn.Module):
             # Log metrics to TensorBoard
             for key, value in losses.items():
                 self.writer.add_scalar(f"Loss/{key}", value, itn)
-
-            # Additional metrics calculation and logging can be added here
 
         self.nlp.to_disk("/results/my_model")
         self.writer.close()
