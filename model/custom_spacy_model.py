@@ -32,8 +32,6 @@ class MySpaCyModel(torch.nn.Module):
         examples = []
         cnt = 0
         for doc in train_data:
-            if cnt == 3:
-                break
             for sent in doc['sentences']:
                 doc = self.nlp.make_doc(' '.join(sent['words']))
                 entities = []
@@ -42,7 +40,6 @@ class MySpaCyModel(torch.nn.Module):
                     entities.append((ent.start, ent.end, ent.label_, ent_label))
                 example = Example.from_dict(doc, {'entities': entities})
                 examples.append(example)
-                print(cnt)
             cnt += 1
 
         optimizer = self.nlp.create_optimizer()
